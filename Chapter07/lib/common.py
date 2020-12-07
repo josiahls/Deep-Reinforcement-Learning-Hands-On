@@ -6,6 +6,20 @@ import torch.nn as nn
 
 
 HYPERPARAMS = {
+    'cartpole': {
+        'env_name': "CartPole-v1",
+        'stop_reward': 199.0,
+        'run_name': 'cartpole',
+        'replay_size': 100000,
+        'replay_initial': 32,
+        'target_net_sync': 300,
+        'epsilon_frames': 10 ** 2,
+        'epsilon_start': 1.0,
+        'epsilon_final': 0.02,
+        'learning_rate': 0.0001,
+        'gamma': 0.99,
+        'batch_size': 32
+    },
     'pong': {
         'env_name':         "PongNoFrameskip-v4",
         'stop_reward':      18.0,

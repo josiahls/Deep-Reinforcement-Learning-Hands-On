@@ -114,18 +114,18 @@ if __name__ == "__main__":
         new_logits_v = net(states_v)
         new_prob_v = F.softmax(new_logits_v, dim=1)
         kl_div_v = -((new_prob_v / prob_v).log() * prob_v).sum(dim=1).mean()
-        writer.add_scalar("kl", kl_div_v.item(), step_idx)
-
-        writer.add_scalar("baseline", baseline, step_idx)
-        writer.add_scalar("entropy", entropy_v.item(), step_idx)
-        writer.add_scalar("batch_scales", np.mean(batch_scales), step_idx)
-        writer.add_scalar("loss_entropy", entropy_loss_v.item(), step_idx)
-        writer.add_scalar("loss_policy", loss_policy_v.item(), step_idx)
-        writer.add_scalar("loss_total", loss_v.item(), step_idx)
-
-        writer.add_scalar("grad_l2", np.sqrt(np.mean(np.square(grads))), step_idx)
-        writer.add_scalar("grad_max", np.max(np.abs(grads)), step_idx)
-        writer.add_scalar("grad_var", np.var(grads), step_idx)
+        # writer.add_scalar("kl", kl_div_v.item(), step_idx)
+        #
+        # writer.add_scalar("baseline", baseline, step_idx)
+        # writer.add_scalar("entropy", entropy_v.item(), step_idx)
+        # writer.add_scalar("batch_scales", np.mean(batch_scales), step_idx)
+        # writer.add_scalar("loss_entropy", entropy_loss_v.item(), step_idx)
+        # writer.add_scalar("loss_policy", loss_policy_v.item(), step_idx)
+        # writer.add_scalar("loss_total", loss_v.item(), step_idx)
+        #
+        # writer.add_scalar("grad_l2", np.sqrt(np.mean(np.square(grads))), step_idx)
+        # writer.add_scalar("grad_max", np.max(np.abs(grads)), step_idx)
+        # writer.add_scalar("grad_var", np.var(grads), step_idx)
 
         batch_states.clear()
         batch_actions.clear()

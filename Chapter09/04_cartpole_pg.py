@@ -38,7 +38,7 @@ if __name__ == "__main__":
     net = PGN(env.observation_space.shape[0], env.action_space.n)
     print(net)
 
-    agent = ptan.agent.PolicyAgent(net, preprocessor=ptan.agent.float32_preprocessor,
+    agent = ptan.agent.PolicyAgent(net, preprocessor=ptan.agent.float3w2_preprocessor,
                                    apply_softmax=True)
     exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
 

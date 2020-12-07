@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from ptan.common.wrappers import *
 
 from tensorboardX import SummaryWriter
 
@@ -28,6 +29,31 @@ DELTA_Z = (Vmax - Vmin) / (N_ATOMS - 1)
 
 STATES_TO_EVALUATE = 1000
 EVAL_EVERY_FRAME = 100
+
+
+class ProcessFrameCartpole(gym.ObservationWrapper):
+    def __init__(self, env=None):
+        super(ProcessFrameCartpole, self).__init__(env)
+        self.observation_space = spaces.Box(low=0, high=255, shape=(84, 84, 1), dtype=np.uint8)
+
+    def observation(self, obs):
+        self.render(mode='human')
+        obs=self.render(mode='rgb_array')
+        return ProcessFrameCartpole.process(obs)
+
+    @staticmethod
+    def process(frame):
+        if frame.size == 600 * 400 * 3:
+            img = np.reshape(frame, [600, 400, 3]).astype(np.float32)
+        elif frame.size == 250 * 160 * 3:
+            img = np.reshape(frame, [250, 160, 3]).astype(np.float32)
+        else:
+            assert False, "Unknown resolution."
+        img = img[:, :, 0] * 0.299 + img[:, :, 1] * 0.587 + img[:, :, 2] * 0.114
+        resized_screen = cv2.resize(img, (84, 110), interpolation=cv2.INTER_AREA)
+        x_t = resized_screen[18:102, :]
+        x_t = np.reshape(x_t, [84, 84, 1])
+        return x_t.astype(np.uint8)
 
 
 class DistributionalDQN(nn.Module):
@@ -163,15 +189,18 @@ def calc_loss(batch, net, tgt_net, gamma, device="cpu", save_prefix=None):
 
 
 if __name__ == "__main__":
-    params = common.HYPERPARAMS['pong']
+    params = common.HYPERPARAMS['cartpole']
 #    params['epsilon_frames'] *= 2
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
     args = parser.parse_args()
-    device = torch.device("cuda" if args.cuda else "cpu")
+    device = torch.device("cuda" if args.cuda or True else "cpu")
 
     env = gym.make(params['env_name'])
-    env = ptan.common.wrappers.wrap_dqn(env)
+    # env = ptan.common.wrappers.wrap_dqn(env)
+    env = ProcessFrameCartpole(env)
+    env = ImageToPyTorch(env)
+    env = FrameStack(env, 4)
 
     writer = SummaryWriter(comment="-" + params['run_name'] + "-distrib")
     net = DistributionalDQN(env.observation_space.shape, env.action_space.n).to(device)
@@ -181,7 +210,7 @@ if __name__ == "__main__":
     epsilon_tracker = common.EpsilonTracker(selector, params)
     agent = ptan.agent.DQNAgent(lambda x: net.qvals(x), selector, device=device)
 
-    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=params['gamma'], steps_count=1)
+    exp_source = ptan.experience.ExperienceSource(env, agent, steps_count=1)
     buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=params['replay_size'])
     optimizer = optim.Adam(net.parameters(), lr=params['learning_rate'])
 
